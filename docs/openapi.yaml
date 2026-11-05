@@ -1,0 +1,320 @@
+openapi: 3.0.3
+info:
+  title: API BFF - Proyecto SII ITC (Backend for Frontend)
+  version: 1.0.0
+  description: API intermediaria que conecta el frontend de la aplicación con los servicios del SII ITC y la base de datos local en Supabase.
+servers:
+  - url: http://localhost:3000
+    description: Servidor de Desarrollo Local
+  - url: https://tu-backend.vercel.app
+    description: Servidor de Producción (Vercel)
+paths:
+  /api/local/login:
+    post:
+      summary: Autenticación de usuario
+      description: Recibe credenciales, consulta al SII ITC y devuelve un token JWT limpio.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: 125030002@celaya.tecnm.mx
+                password:
+                  type: string
+                  example: mi_password_123
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUz...
+        '400':
+          description: Petición incorrecta (campos vacíos)
+        '401':
+          description: Credenciales inválidas
+
+  /api/local/estudiante:
+    get:
+      summary: Perfil del estudiante
+      description: Obtiene los datos generales del alumno sin banderas innecesarias.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Datos del estudiante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estudiante'
+
+  /api/local/calificaciones:
+    get:
+      summary: Calificaciones del semestre actual
+      description: Devuelve directamente el arreglo de materias y calificaciones del periodo en curso.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de calificaciones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MateriaCalificacion'
+
+  /api/local/kardex:
+    get:
+      summary: Historial académico (Kardex)
+      description: Devuelve el avance y el arreglo de todas las materias cursadas.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Datos del kardex
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Kardex'
+
+  /api/local/horarios:
+    get:
+      summary: Horario del semestre actual
+      description: Devuelve el arreglo de materias con sus respectivos horarios y salones.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Horario semanal
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MateriaHorario'
+
+  /api/local/asesorias:
+    get:
+      summary: Lista de asesorías disponibles
+      description: Obtiene las asesorías activas desde Supabase.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de asesorías
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asesoria'
+    post:
+      summary: Crear nueva asesoría
+      description: Registra una nueva asesoría en Supabase.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsesoriaInput'
+      responses:
+        '201':
+          description: Asesoría creada con éxito
+
+  /api/local/asesorias/inscripcion:
+    post:
+      summary: Inscribirse a una asesoría
+      description: Registra a un alumno en una asesoría específica en Supabase.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InscripcionInput'
+      responses:
+        '201':
+          description: Inscripción exitosa
+        '409':
+          description: Conflicto (El alumno ya está inscrito)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Estudiante:
+      type: object
+      properties:
+        numero_control:
+          type: string
+          example: '22030053'
+        persona:
+          type: string
+          example: DENNIS ADRIAN QUINTANA LAZGARE
+        email:
+          type: string
+          example: l22030053@celaya.tecnm.mx
+        semestre:
+          type: integer
+          example: 9
+        promedio_ponderado:
+          type: string
+          example: '86.59'
+        porcentaje_avance:
+          type: integer
+          example: 90
+        foto:
+          type: string
+          example: /9j/4AAQSk...
+
+    MateriaCalificacion:
+      type: object
+      properties:
+        materia:
+          type: object
+          properties:
+            id_grupo:
+              type: integer
+            nombre_materia:
+              type: string
+            clave_materia:
+              type: string
+        calificaiones:
+          type: array
+          items:
+            type: object
+            properties:
+              numero_calificacion:
+                type: integer
+              calificacion:
+                type: string
+                nullable: true
+
+    Kardex:
+      type: object
+      properties:
+        porcentaje_avance:
+          type: number
+          format: float
+        kardex:
+          type: array
+          items:
+            type: object
+            properties:
+              nombre_materia:
+                type: string
+              clave_materia:
+                type: string
+              periodo:
+                type: string
+              creditos:
+                type: string
+              calificacion:
+                type: string
+              semestre:
+                type: integer
+
+    MateriaHorario:
+      type: object
+      properties:
+        nombre_materia:
+          type: string
+        clave_materia:
+          type: string
+        lunes:
+          type: string
+          nullable: true
+        lunes_clave_salon:
+          type: string
+          nullable: true
+        martes:
+          type: string
+          nullable: true
+        martes_clave_salon:
+          type: string
+          nullable: true
+        miercoles:
+          type: string
+          nullable: true
+        miercoles_clave_salon:
+          type: string
+          nullable: true
+
+    Asesoria:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre_tutor:
+          type: string
+        materia_asesoria:
+          type: string
+        ubicacion:
+          type: string
+        fecha_hora:
+          type: string
+          format: date-time
+        cupo_maximo:
+          type: integer
+
+    AsesoriaInput:
+      type: object
+      required:
+        - numero_control_tutor
+        - nombre_tutor
+        - materia_asesoria
+        - descripcion_tema
+        - ubicacion
+        - fecha_hora
+      properties:
+        numero_control_tutor:
+          type: string
+        nombre_tutor:
+          type: string
+        materia_asesoria:
+          type: string
+        descripcion_tema:
+          type: string
+        ubicacion:
+          type: string
+        fecha_hora:
+          type: string
+          format: date-time
+        cupo_maximo:
+          type: integer
+          default: 5
+
+    InscripcionInput:
+      type: object
+      required:
+        - asesoria_id
+        - numero_control_alumno
+        - nombre_alumno
+      properties:
+        asesoria_id:
+          type: string
+          format: uuid
+        numero_control_alumno:
+          type: string
+        nombre_alumno:
+          type: string

@@ -27,8 +27,9 @@ sii-backend-web-2026/
         ├── auth.js           # Rutas de autenticación (login, logout).
         ├── student.js        # Rutas institucionales (kardex, calificaciones).
         └── extra.js          # Módulo de asesorías (listar, publicar, inscribir, validar cupos).
-```
-*Arquitectura de Seguridad y Cookies*
+```text
+
+**Arquitectura de Seguridad y Cookies**
 El sistema está diseñado con un enfoque estricto en la protección de la identidad del usuario y sus credenciales institucionales. El frontend jamás se comunica directamente con el servidor del SII; todas las peticiones son gestionadas e intermediadas por nuestro BFF.
 Se implementó un sistema de sesión basado en Cookies HTTP de Estado para manejar el JWT, utilizando directivas estrictas de seguridad inter-dominio:
 `httpOnly: true` (Mitigación XSS): Impide estrictamente que cualquier script (como `document.cookie`) lea el token en el navegador.

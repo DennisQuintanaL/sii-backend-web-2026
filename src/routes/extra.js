@@ -28,6 +28,36 @@ router.get('/', async (req, res) => {
     }
 });
 
+// POST /api/local/asesorias -> Publicar una nueva asesoría
+router.post('/', async (req, res) => {
+        // Los campos deben coincidir con lo que envía el frontend y las columnas de tu BD
+    const { materia, tema, lugar, fecha, cupo_maximo, asesor_id } = req.body;
+
+    if (!materia || !tema || !lugar || !fecha || !cupo_maximo) {
+            return res.status(400).json({ error: 'Faltan datos requeridos para publicar la asesoría.' });
+    }
+    try {
+        const { data, error } = await supabase
+            .from('asesorias')
+            .insert([{ 
+                materia, 
+                tema, 
+                lugar, 
+                fecha, 
+                cupo_maximo,
+                asesor_id // Si tu BD requiere el ID del alumno que da la asesoría, asegúrate de recibirlo e insertarlo
+            }])
+            .select();
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.status(201).json({ mensaje: 'Asesoría publicada exitosamente', data });
+        } catch (err) {
+            res.status(500).json({ error: 'Error interno del servidor al publicar la asesoría.' });
+        }
+    });
+
 // POST /api/local/asesorias/inscripcion -> Inscribir alumno validando el cupo
 router.post('/inscripcion', async (req, res) => {
     const { asesoria_id, alumno_id } = req.body; 
